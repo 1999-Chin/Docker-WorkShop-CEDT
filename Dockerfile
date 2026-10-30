@@ -12,7 +12,7 @@ WORKDIR /app
 
 # TODO(step-4b): copy package.json and package-lock.json, then install deps.
 COPY app/package.json app/package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm update proxy-addr --omit=dev
 
 # TODO(step-4c): copy the rest of the app source into /app.
 COPY app/ ./
@@ -25,6 +25,11 @@ COPY app/ ./
 FROM node:20.11-slim
 
 WORKDIR /app
+
+# Apply Debian security updates released after the pinned base image,
+# and drop npm: the app starts with `node` directly, so npm is unused at runtime.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # TODO(step-4e): copy the fully-installed app from the builder stage.
 COPY --from=builder /app /app
